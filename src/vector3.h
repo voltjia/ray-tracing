@@ -8,6 +8,8 @@ struct Vector3 {
 
     Vector3(ValueType x, ValueType y, ValueType z);
 
+    static ValueType dot(const Vector3& lhs, const Vector3& rhs);
+
     ValueType magnitude_sqaured() const;
 
     ValueType magnitude() const;

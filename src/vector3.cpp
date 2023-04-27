@@ -6,6 +6,10 @@ namespace ray_tracing {
 
 Vector3::Vector3(ValueType x, ValueType y, ValueType z) : x{x}, y{y}, z{z} {}
 
+Vector3::ValueType Vector3::dot(const Vector3& lhs, const Vector3& rhs) {
+    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
+}
+
 Vector3::ValueType Vector3::magnitude_sqaured() const {
     return x * x + y * y + z * z;
 }
