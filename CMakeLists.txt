@@ -5,4 +5,4 @@ project("Ray Tracing")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_executable(trace main.cpp)
+add_executable(trace src/main.cpp src/color.cpp src/vector3.cpp src/ray.cpp)
