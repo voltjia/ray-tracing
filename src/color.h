@@ -1,8 +1,6 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <iostream>
-
 namespace ray_tracing {
 
 struct Color {
