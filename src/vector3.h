@@ -6,6 +6,8 @@ namespace ray_tracing {
 struct Vector3 {
     using ValueType = float;
 
+    Vector3() = default;
+
     Vector3(ValueType x, ValueType y, ValueType z);
 
     static ValueType dot(const Vector3& lhs, const Vector3& rhs);

@@ -1,5 +1,9 @@
 #include "color.h"
+#include "hittable-list.h"
 #include "ray.h"
+#include "sphere.h"
+#include "utils.h"
+#include "vector3.h"
 
 #include <png.h>
 
@@ -69,7 +73,7 @@ static bool write_png(const char* filename,
         for (auto x{decltype(width){0}}; x < width; ++x) {
             for (auto i{decltype(num_channels){0}}; i < num_channels; ++i) {
                 row[x * num_channels + i]
-                    = buffer[(y * width + x) * num_channels + i];
+                        = buffer[(y * width + x) * num_channels + i];
             }
         }
         png_write_row(png_ptr, row);
@@ -85,9 +89,18 @@ static bool write_png(const char* filename,
 }
 
 static Color background_color(const Ray& ray) {
-    return Color::lerp(Color{0.5, 0.7, 1, 1},
-                       Color::white,
+    return Color::lerp(Color::white,
+                       Color{0.5, 0.7, 1, 1},
                        0.5 * (ray.direction.y + 1));
+}
+
+static Color hit_color(const Ray& ray, const Hittable& world) {
+    Hittable::HitInfo hit_info;
+    if (world.hit(ray, hit_info)) {
+        auto normal{hit_info.normal};
+        return 0.5 * Color{normal.x, normal.y, -normal.z, 1} + Color::gray;
+    }
+    return background_color(ray);
 }
 
 int main(int argc, char* argv[]) {
@@ -101,7 +114,7 @@ int main(int argc, char* argv[]) {
     constexpr auto aspect_radio{16.0 / 9.0};
     constexpr std::size_t image_width{400};
     constexpr auto image_height{
-        static_cast<decltype(image_width)>(image_width / aspect_radio)};
+            static_cast<decltype(image_width)>(image_width / aspect_radio)};
 
     constexpr auto viewport_height{2.0};
     constexpr auto viewport_width{aspect_radio * viewport_height};
@@ -113,20 +126,22 @@ int main(int argc, char* argv[]) {
     auto lower_left_corner{origin - vertical / 2 - horizontal / 2
                            + Vector3::forward * focal_length};
 
-    std::vector<std::uint8_t> buffer(num_channels * image_width * image_height);
+    HittableList world;
+    world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5));
+    world.add(std::make_shared<Sphere>(Vector3{0, -100.5, 1}, 100));
 
-    for (auto row{decltype(image_height){0}}; row < image_height; ++row) {
+    std::vector<std::uint8_t> buffer;
+    for (auto row{decltype(image_height){image_height}}; row != -1; --row) {
         for (auto col{decltype(image_width){0}}; col < image_width; ++col) {
             auto u{static_cast<Vector3::ValueType>(col) / (image_width - 1)};
             auto v{static_cast<Vector3::ValueType>(row) / (image_height - 1)};
             Ray ray{origin,
                     lower_left_corner + u * horizontal + v * vertical - origin};
-            auto color{background_color(ray)};
-            auto index{num_channels * (row * image_width + col)};
-            buffer[index] = scale_256(color.r);
-            buffer[index + 1] = scale_256(color.g);
-            buffer[index + 2] = scale_256(color.b);
-            buffer[index + 3] = scale_256(color.a);
+            auto color{hit_color(ray, world)};
+            buffer.emplace_back(scale_256(color.r));
+            buffer.emplace_back(scale_256(color.g));
+            buffer.emplace_back(scale_256(color.b));
+            buffer.emplace_back(scale_256(color.a));
         }
     }
 
