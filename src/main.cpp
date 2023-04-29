@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "color.h"
+#include "dielectric.h"
 #include "hittable-list.h"
 #include "lambertian.h"
 #include "metal.h"
@@ -143,15 +144,16 @@ int main(int argc, char* argv[]) {
     HittableList world;
 
     auto ground_material{std::make_shared<Lambertian>(Color{0.8, 0.8, 0, 1})};
-    auto center_material{std::make_shared<Lambertian>(Color{0.7, 0.3, 0.3, 1})};
-    auto left_material{std::make_shared<Metal>(Color{0.8, 0.8, 0.8, 1}, 0.3)};
-    auto right_material{std::make_shared<Metal>(Color{0.8, 0.6, 0.2, 1}, 1)};
+    auto center_material{std::make_shared<Lambertian>(Color{0.1, 0.2, 0.5, 1})};
+    auto left_material{std::make_shared<Dielectric>(1.5)};
+    auto right_material{std::make_shared<Metal>(Color{0.8, 0.6, 0.2, 1}, 0)};
 
     world.add(std::make_shared<Sphere>(Vector3{0, -100.5, 1},
                                        100,
                                        ground_material));
     world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5, center_material));
     world.add(std::make_shared<Sphere>(Vector3{-1, 0, 1}, 0.5, left_material));
+    world.add(std::make_shared<Sphere>(Vector3{-1, 0, 1}, -0.4, left_material));
     world.add(std::make_shared<Sphere>(Vector3{1, 0, 1}, 0.5, right_material));
 
     std::vector<std::uint8_t> buffer;

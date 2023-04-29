@@ -31,6 +31,10 @@ bool is_vector_near_zero(const Vector3& vec);
 
 Vector3 reflect(const Vector3& v, const Vector3& n);
 
+Vector3 refract(const Vector3& v,
+                const Vector3& n,
+                Vector3::ValueType refraction_ratio);
+
 }
 
 #endif

@@ -2,6 +2,8 @@
 
 #include <random>
 
+#include <cmath>
+
 namespace ray_tracing {
 
 Vector3::ValueType degrees_to_radians(Vector3::ValueType degrees) {
@@ -49,6 +51,17 @@ bool is_vector_near_zero(const Vector3& vec) {
 
 Vector3 reflect(const Vector3& v, const Vector3& n) {
     return v - 2 * Vector3::dot(v, n) * n;
+}
+
+Vector3 refract(const Vector3& v,
+                const Vector3& n,
+                Vector3::ValueType refraction_ratio) {
+    auto uv{v.normalized()};
+    auto cos_theta{std::fmin(Vector3::dot(-uv, n), 1)};
+    auto r_out_perp{refraction_ratio * (uv + cos_theta * n)};
+    auto r_out_parallel{
+            -std::sqrt(std::fabs(1 - r_out_perp.magnitude_sqaured())) * n};
+    return r_out_perp + r_out_parallel;
 }
 
 }

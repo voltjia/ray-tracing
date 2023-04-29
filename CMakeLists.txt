@@ -19,5 +19,6 @@ add_executable(trace
     src/camera.cpp
     src/lambertian.cpp
     src/metal.cpp
+    src/dielectric.cpp
 )
 target_link_libraries(trace PNG::PNG)
