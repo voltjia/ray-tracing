@@ -1,3 +1,4 @@
+#include "camera.h"
 #include "color.h"
 #include "hittable-list.h"
 #include "ray.h"
@@ -115,16 +116,9 @@ int main(int argc, char* argv[]) {
     constexpr std::size_t image_width{400};
     constexpr auto image_height{
             static_cast<decltype(image_width)>(image_width / aspect_radio)};
+    constexpr auto samples_per_pixel{100};
 
-    constexpr auto viewport_height{2.0};
-    constexpr auto viewport_width{aspect_radio * viewport_height};
-    constexpr auto focal_length{1.0};
-
-    auto origin{Vector3::zero};
-    auto horizontal{Vector3::right * viewport_width};
-    auto vertical{Vector3::up * viewport_height};
-    auto lower_left_corner{origin - vertical / 2 - horizontal / 2
-                           + Vector3::forward * focal_length};
+    Camera camera;
 
     HittableList world;
     world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5));
@@ -133,11 +127,26 @@ int main(int argc, char* argv[]) {
     std::vector<std::uint8_t> buffer;
     for (auto row{decltype(image_height){image_height}}; row != -1; --row) {
         for (auto col{decltype(image_width){0}}; col < image_width; ++col) {
-            auto u{static_cast<Vector3::ValueType>(col) / (image_width - 1)};
-            auto v{static_cast<Vector3::ValueType>(row) / (image_height - 1)};
-            Ray ray{origin,
-                    lower_left_corner + u * horizontal + v * vertical - origin};
-            auto color{hit_color(ray, world)};
+            Color::ValueType r_sum{0};
+            Color::ValueType g_sum{0};
+            Color::ValueType b_sum{0};
+            Color::ValueType a_sum{0};
+            for (auto i{samples_per_pixel}; i != -1; --i) {
+                auto u{(static_cast<Vector3::ValueType>(col) + random_double())
+                       / (image_width - 1)};
+                auto v{(static_cast<Vector3::ValueType>(row) + random_double())
+                       / (image_height - 1)};
+                auto ray{camera.generate_ray(u, v)};
+                auto color{hit_color(ray, world)};
+                r_sum += color.r;
+                g_sum += color.g;
+                b_sum += color.b;
+                a_sum += color.a;
+            }
+            Color color{r_sum / samples_per_pixel,
+                        g_sum / samples_per_pixel,
+                        b_sum / samples_per_pixel,
+                        a_sum / samples_per_pixel};
             buffer.emplace_back(scale_256(color.r));
             buffer.emplace_back(scale_256(color.g));
             buffer.emplace_back(scale_256(color.b));
