@@ -1,6 +1,8 @@
 #include "camera.h"
 #include "color.h"
 #include "hittable-list.h"
+#include "lambertian.h"
+#include "metal.h"
 #include "ray.h"
 #include "sphere.h"
 #include "utils.h"
@@ -89,19 +91,6 @@ static bool write_png(const char* filename,
     return true;
 }
 
-static Vector3 random_vector_in_unit_sphere() {
-    for (;;) {
-        auto vec{Vector3::random(-1, 1)};
-        if (vec.magnitude_sqaured() < 1) {
-            return vec;
-        }
-    }
-}
-
-static Vector3 random_unit_vector() {
-    return random_vector_in_unit_sphere().normalized();
-}
-
 static Color background_color(const Ray& ray) {
     return Color::lerp(Color::white,
                        Color{0.5, 0.7, 1, 1},
@@ -117,11 +106,19 @@ static Color hit_color(const Ray& ray,
 
     Hittable::HitInfo hit_info;
     if (world.hit(ray, hit_info)) {
-        auto target{hit_info.point + hit_info.normal + random_unit_vector()};
-        return 0.5
-               * hit_color(Ray{hit_info.point, target - hit_info.point},
-                           world,
-                           depth - 1);
+        Ray scattered;
+        Color attenuation;
+        if (hit_info.material_ptr->scatter(ray,
+                                           hit_info,
+                                           scattered,
+                                           attenuation)) {
+            auto color{hit_color(scattered, world, depth - 1)};
+            return Color{attenuation.r * color.r,
+                         attenuation.g * color.g,
+                         attenuation.b * color.b,
+                         attenuation.a * color.a};
+        }
+        return Color::clear;
     }
     return background_color(ray);
 }
@@ -144,8 +141,18 @@ int main(int argc, char* argv[]) {
     Camera camera;
 
     HittableList world;
-    world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5));
-    world.add(std::make_shared<Sphere>(Vector3{0, -100.5, 1}, 100));
+
+    auto ground_material{std::make_shared<Lambertian>(Color{0.8, 0.8, 0, 1})};
+    auto center_material{std::make_shared<Lambertian>(Color{0.7, 0.3, 0.3, 1})};
+    auto left_material{std::make_shared<Metal>(Color{0.8, 0.8, 0.8, 1}, 0.3)};
+    auto right_material{std::make_shared<Metal>(Color{0.8, 0.6, 0.2, 1}, 1)};
+
+    world.add(std::make_shared<Sphere>(Vector3{0, -100.5, 1},
+                                       100,
+                                       ground_material));
+    world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5, center_material));
+    world.add(std::make_shared<Sphere>(Vector3{-1, 0, 1}, 0.5, left_material));
+    world.add(std::make_shared<Sphere>(Vector3{1, 0, 1}, 0.5, right_material));
 
     std::vector<std::uint8_t> buffer;
     for (auto row{decltype(image_height){image_height}}; row != -1; --row) {

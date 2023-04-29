@@ -28,4 +28,27 @@ double random_double() {
     return random_double(0, 1);
 }
 
+Vector3 random_vector_in_unit_sphere() {
+    for (;;) {
+        auto vec{Vector3::random(-1, 1)};
+        if (vec.magnitude_sqaured() < 1) {
+            return vec;
+        }
+    }
+}
+
+Vector3 random_unit_vector() {
+    return random_vector_in_unit_sphere().normalized();
+}
+
+bool is_vector_near_zero(const Vector3& vec) {
+    constexpr auto epsilon{1e-8};
+    return std::fabs(vec.x) < epsilon && std::fabs(vec.y) < epsilon
+           && std::fabs(vec.z) < epsilon;
+}
+
+Vector3 reflect(const Vector3& v, const Vector3& n) {
+    return v - 2 * Vector3::dot(v, n) * n;
+}
+
 }

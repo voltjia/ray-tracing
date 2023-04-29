@@ -5,6 +5,8 @@
 
 #include <limits>
 
+#include <cmath>
+
 namespace ray_tracing {
 
 constexpr auto infinity{std::numeric_limits<Vector3::ValueType>::infinity()};
@@ -20,6 +22,14 @@ float random_float();
 double random_double(double min, double max);
 
 double random_double();
+
+Vector3 random_vector_in_unit_sphere();
+
+Vector3 random_unit_vector();
+
+bool is_vector_near_zero(const Vector3& vec);
+
+Vector3 reflect(const Vector3& v, const Vector3& n);
 
 }
 

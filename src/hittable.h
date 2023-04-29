@@ -4,7 +4,11 @@
 #include "ray.h"
 #include "vector3.h"
 
+#include <memory>
+
 namespace ray_tracing {
+
+class Material;
 
 class Hittable {
 public:
@@ -14,6 +18,8 @@ public:
         Vector3 normal;
 
         Vector3::ValueType distance;
+
+        std::shared_ptr<Material> material_ptr;
     };
 
     virtual bool hit(const Ray& ray,

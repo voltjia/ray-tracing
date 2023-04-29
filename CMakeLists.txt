@@ -17,5 +17,7 @@ add_executable(trace
     src/hittable-list.cpp
     src/sphere.cpp
     src/camera.cpp
+    src/lambertian.cpp
+    src/metal.cpp
 )
 target_link_libraries(trace PNG::PNG)

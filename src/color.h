@@ -6,6 +6,8 @@ namespace ray_tracing {
 struct Color {
     using ValueType = double;
 
+    Color() = default;
+
     Color(ValueType r, ValueType g, ValueType b, ValueType a);
 
     static Color lerp_unclamped(const Color& c0, const Color& c1, ValueType t);

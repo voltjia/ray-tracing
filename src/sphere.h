@@ -2,13 +2,18 @@
 #define SPHERE_H
 
 #include "hittable.h"
+#include "material.h"
 #include "vector3.h"
+
+#include <memory>
 
 namespace ray_tracing {
 
 class Sphere : public Hittable {
 public:
-    Sphere(const Vector3& center, Vector3::ValueType radius);
+    Sphere(const Vector3& center,
+           Vector3::ValueType radius,
+           std::shared_ptr<Material> material_ptr);
 
     bool hit(const Ray& ray,
              HitInfo& hit_info,
@@ -19,6 +24,8 @@ private:
     Vector3 center;
 
     Vector3::ValueType radius;
+
+    std::shared_ptr<Material> material_ptr;
 };
 
 }

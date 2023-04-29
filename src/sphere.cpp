@@ -4,8 +4,10 @@
 
 namespace ray_tracing {
 
-Sphere::Sphere(const Vector3& center, Vector3::ValueType radius)
-    : center{center}, radius{radius} {}
+Sphere::Sphere(const Vector3& center,
+               Vector3::ValueType radius,
+               std::shared_ptr<Material> material_ptr)
+    : center{center}, radius{radius}, material_ptr{material_ptr} {}
 
 bool Sphere::hit(const Ray& ray,
                  HitInfo& hit_info,
@@ -33,6 +35,7 @@ bool Sphere::hit(const Ray& ray,
     hit_info.point = ray.at(root);
     hit_info.normal = (hit_info.point - center) / radius;
     hit_info.distance = root;
+    hit_info.material_ptr = material_ptr;
 
     return true;
 }

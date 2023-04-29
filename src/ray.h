@@ -6,6 +6,8 @@
 namespace ray_tracing {
 
 struct Ray {
+    Ray() = default;
+
     Ray(const Vector3& origin, const Vector3& direction);
 
     Vector3 at(Vector3::ValueType distance) const;
