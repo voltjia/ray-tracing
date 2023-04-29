@@ -12,6 +12,8 @@ struct Color {
 
     static Color lerp(const Color& c0, const Color& c1, ValueType t);
 
+    Color gamma() const;
+
     static const Color clear;
 
     static const Color black;

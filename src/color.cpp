@@ -1,6 +1,7 @@
 #include "color.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace ray_tracing {
 
@@ -16,6 +17,10 @@ Color Color::lerp_unclamped(const Color& c0, const Color& c1, ValueType t) {
 
 Color Color::lerp(const Color& c0, const Color& c1, ValueType t) {
     return lerp_unclamped(c0, c1, std::max(0.0, std::min(1.0, t)));
+}
+
+Color Color::gamma() const {
+    return Color{std::sqrt(r), std::sqrt(g), std::sqrt(b), std::sqrt(a)};
 }
 
 Color operator-(const Color& color) {

@@ -89,17 +89,39 @@ static bool write_png(const char* filename,
     return true;
 }
 
+static Vector3 random_vector_in_unit_sphere() {
+    for (;;) {
+        auto vec{Vector3::random(-1, 1)};
+        if (vec.magnitude_sqaured() < 1) {
+            return vec;
+        }
+    }
+}
+
+static Vector3 random_unit_vector() {
+    return random_vector_in_unit_sphere().normalized();
+}
+
 static Color background_color(const Ray& ray) {
     return Color::lerp(Color::white,
                        Color{0.5, 0.7, 1, 1},
                        0.5 * (ray.direction.y + 1));
 }
 
-static Color hit_color(const Ray& ray, const Hittable& world) {
+static Color hit_color(const Ray& ray,
+                       const Hittable& world,
+                       std::size_t depth) {
+    if (depth == -1) {
+        return Color::clear;
+    }
+
     Hittable::HitInfo hit_info;
     if (world.hit(ray, hit_info)) {
-        auto normal{hit_info.normal};
-        return 0.5 * Color{normal.x, normal.y, -normal.z, 1} + Color::gray;
+        auto target{hit_info.point + hit_info.normal + random_unit_vector()};
+        return 0.5
+               * hit_color(Ray{hit_info.point, target - hit_info.point},
+                           world,
+                           depth - 1);
     }
     return background_color(ray);
 }
@@ -117,6 +139,7 @@ int main(int argc, char* argv[]) {
     constexpr auto image_height{
             static_cast<decltype(image_width)>(image_width / aspect_radio)};
     constexpr auto samples_per_pixel{100};
+    constexpr auto max_depth{50};
 
     Camera camera;
 
@@ -137,7 +160,7 @@ int main(int argc, char* argv[]) {
                 auto v{(static_cast<Vector3::ValueType>(row) + random_double())
                        / (image_height - 1)};
                 auto ray{camera.generate_ray(u, v)};
-                auto color{hit_color(ray, world)};
+                auto color{hit_color(ray, world, max_depth)};
                 r_sum += color.r;
                 g_sum += color.g;
                 b_sum += color.b;
@@ -147,10 +170,11 @@ int main(int argc, char* argv[]) {
                         g_sum / samples_per_pixel,
                         b_sum / samples_per_pixel,
                         a_sum / samples_per_pixel};
-            buffer.emplace_back(scale_256(color.r));
-            buffer.emplace_back(scale_256(color.g));
-            buffer.emplace_back(scale_256(color.b));
-            buffer.emplace_back(scale_256(color.a));
+            Color color_gamma_corrected{color.gamma()};
+            buffer.emplace_back(scale_256(color_gamma_corrected.r));
+            buffer.emplace_back(scale_256(color_gamma_corrected.g));
+            buffer.emplace_back(scale_256(color_gamma_corrected.b));
+            buffer.emplace_back(scale_256(color_gamma_corrected.a));
         }
     }
 
