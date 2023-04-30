@@ -18,7 +18,7 @@ Camera::Camera(Vector3 lookfrom,
       aperture{aperture} {}
 
 Ray Camera::generate_ray(Vector3::ValueType s, Vector3::ValueType t) const {
-    auto rd{lens_radius * random_vector_in_unit_sphere()};
+    auto rd{lens_radius * random_vector_in_unit_disk()};
     auto offset{u * rd.x + v * rd.y};
     return Ray{lookfrom + offset,
                viewport_lower_left_corner + s * viewport_horizontal
