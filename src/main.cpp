@@ -11,7 +11,9 @@
 
 #include <png.h>
 
+#include <iomanip>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <cmath>
@@ -102,7 +104,7 @@ static Color hit_color(const Ray& ray,
                        const Hittable& world,
                        std::size_t depth) {
     if (depth == -1) {
-        return Color::clear;
+        return Color::black;
     }
 
     Hittable::HitInfo hit_info;
@@ -119,9 +121,67 @@ static Color hit_color(const Ray& ray,
                          attenuation.b * color.b,
                          attenuation.a * color.a};
         }
-        return Color::clear;
+        return Color::black;
     }
     return background_color(ray);
+}
+
+HittableList random_scene() {
+    HittableList scene;
+
+    auto ground_material{std::make_shared<Lambertian>(Color::gray)};
+    scene.add(std::make_shared<Sphere>(Vector3{0, -1000, 0},
+                                       1000,
+                                       ground_material));
+
+    for (auto a{-10}; a < 10; ++a) {
+        for (auto b{-10}; b < 10; ++b) {
+            auto center{Vector3{static_cast<Vector3::ValueType>(
+                                        a + 0.9 * random_double()),
+                                0.2,
+                                static_cast<Vector3::ValueType>(
+                                        b + 0.9 * random_double())}};
+            auto material_choice{random_double()};
+
+            if ((center - Vector3{4, 0.2, 0}).magnitude() > 0.9) {
+                std::shared_ptr<Material> material;
+
+                if (material_choice < 0.6) {
+                    auto albedo{Color{random_double() * random_double(),
+                                      random_double() * random_double(),
+                                      random_double() * random_double(),
+                                      random_double() * random_double()}};
+                    material = std::make_shared<Lambertian>(albedo);
+                } else if (material_choice < 0.9) {
+                    auto albedo{Color{random_double(0.5, 1),
+                                      random_double(0.5, 1),
+                                      random_double(0.5, 1),
+                                      random_double(0.5, 1)}};
+                    auto fuzz{random_double(0, 0.5)};
+                    material = std::make_shared<Metal>(albedo, fuzz);
+                } else {
+                    material = std::make_shared<Dielectric>(1.5);
+                }
+
+                scene.add(std::make_shared<Sphere>(center, 0.2, material));
+            }
+        }
+    }
+
+    auto dielectric_material{std::make_shared<Dielectric>(1.5)};
+    scene.add(
+            std::make_shared<Sphere>(Vector3{0, 1, 0}, 1, dielectric_material));
+
+    auto lambertian_material{
+            std::make_shared<Lambertian>(Color{0.4, 0.2, 0.1, 1})};
+    scene.add(std::make_shared<Sphere>(Vector3{-4, 1, 0},
+                                       1,
+                                       lambertian_material));
+
+    auto metal_material{std::make_shared<Metal>(Color{0.7, 0.6, 0.5, 1}, 0)};
+    scene.add(std::make_shared<Sphere>(Vector3{4, 1, 0}, 1, metal_material));
+
+    return scene;
 }
 
 int main(int argc, char* argv[]) {
@@ -133,17 +193,17 @@ int main(int argc, char* argv[]) {
     const char* output_filename = argv[1];
 
     constexpr auto aspect_radio{16.0 / 9.0};
-    constexpr std::size_t image_width{400};
+    constexpr std::size_t image_width{1920};
     constexpr auto image_height{
             static_cast<decltype(image_width)>(image_width / aspect_radio)};
-    constexpr auto samples_per_pixel{100};
+    constexpr auto samples_per_pixel{500};
     constexpr auto max_depth{50};
 
-    const auto lookfrom{Vector3{3, 3, -2}};
-    const auto lookat{Vector3::forward};
+    const auto lookfrom{Vector3{13, 2, -3}};
+    const auto lookat{Vector3::zero};
     const auto viewup{Vector3::up};
-    const auto focus_distance{(lookat - lookfrom).magnitude()};
-    constexpr auto aperture{2};
+    const auto focus_distance{10};
+    constexpr auto aperture{0.1};
 
     Camera camera(lookfrom,
                   lookat,
@@ -153,21 +213,7 @@ int main(int argc, char* argv[]) {
                   focus_distance,
                   aperture);
 
-    HittableList world;
-
-    auto ground_material{std::make_shared<Lambertian>(Color{0.8, 0.8, 0, 1})};
-    auto center_material{std::make_shared<Lambertian>(Color{0.1, 0.2, 0.5, 1})};
-    auto left_material{std::make_shared<Dielectric>(1.5)};
-    auto right_material{std::make_shared<Metal>(Color{0.8, 0.6, 0.2, 1}, 0)};
-
-    world.add(std::make_shared<Sphere>(Vector3{0, -100.5, 1},
-                                       100,
-                                       ground_material));
-    world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5, center_material));
-    world.add(std::make_shared<Sphere>(Vector3{-1, 0, 1}, 0.5, left_material));
-    world.add(
-            std::make_shared<Sphere>(Vector3{-1, 0, 1}, -0.45, left_material));
-    world.add(std::make_shared<Sphere>(Vector3{1, 0, 1}, 0.5, right_material));
+    auto world{random_scene()};
 
     std::vector<std::uint8_t> buffer;
     for (auto row{decltype(image_height){image_height}}; row != -1; --row) {
@@ -198,10 +244,24 @@ int main(int argc, char* argv[]) {
             buffer.emplace_back(scale_256(color_gamma_corrected.b));
             buffer.emplace_back(scale_256(color_gamma_corrected.a));
         }
+
+        constexpr auto progress_bar_width{50};
+        auto progress{100.0 * (image_height - row) / image_height};
+        auto num_progress_chars{progress_bar_width * (image_height - row)
+                                / image_height};
+        std::string progress_bar;
+        for (decltype(num_progress_chars) i{0}; i < num_progress_chars; ++i) {
+            progress_bar += u8"█";
+        }
+        std::string empty_space(progress_bar_width - num_progress_chars, ' ');
+        std::cerr << "\rRendering: [" << progress_bar << empty_space << "] "
+                  << std::fixed << std::setprecision(2) << progress
+                  << " % completed.";
     }
+    std::cerr << '\n';
 
     if (write_png(output_filename, image_width, image_height, buffer.data())) {
-        std::cout << "PNG file '" << output_filename
+        std::cerr << "PNG file '" << output_filename
                   << "' created successfully.\n";
     } else {
         std::cerr << "Failed to create PNG file.\n";
