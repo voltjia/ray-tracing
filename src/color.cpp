@@ -1,22 +1,21 @@
 #include "color.h"
 
-#include <algorithm>
 #include <cmath>
 
 namespace ray_tracing {
 
 Color::Color(ValueType r, ValueType g, ValueType b, ValueType a)
-    : r{std::max(0.0, std::min(1.0, r))},
-      g{std::max(0.0, std::min(1.0, g))},
-      b{std::max(0.0, std::min(1.0, b))},
-      a{std::max(0.0, std::min(1.0, a))} {}
+    : r{std::fmax(0.0, std::fmin(1.0, r))},
+      g{std::fmax(0.0, std::fmin(1.0, g))},
+      b{std::fmax(0.0, std::fmin(1.0, b))},
+      a{std::fmax(0.0, std::fmin(1.0, a))} {}
 
 Color Color::lerp_unclamped(const Color& c0, const Color& c1, ValueType t) {
     return (1 - t) * c0 + t * c1;
 }
 
 Color Color::lerp(const Color& c0, const Color& c1, ValueType t) {
-    return lerp_unclamped(c0, c1, std::max(0.0, std::min(1.0, t)));
+    return lerp_unclamped(c0, c1, std::fmax(0.0, std::fmin(1.0, t)));
 }
 
 Color Color::gamma() const {

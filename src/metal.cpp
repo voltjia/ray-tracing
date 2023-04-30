@@ -7,7 +7,7 @@
 namespace ray_tracing {
 
 Metal::Metal(const Color& albedo, Vector3::ValueType fuzz)
-    : albedo{albedo}, fuzz{std::max(0.0f, std::min(1.0f, fuzz))} {}
+    : albedo{albedo}, fuzz{std::fmax(0.0f, std::fmin(1.0f, fuzz))} {}
 
 bool Metal::scatter(const Ray& incident,
                     const Hittable::HitInfo& hit_info,
