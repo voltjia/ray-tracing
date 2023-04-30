@@ -12,6 +12,12 @@ Vector3::ValueType Vector3::dot(const Vector3& lhs, const Vector3& rhs) {
     return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
 
+Vector3 Vector3::cross(const Vector3& lhs, const Vector3& rhs) {
+    return Vector3{lhs.y * rhs.z - lhs.z * rhs.y,
+                   lhs.z * rhs.x - lhs.x * rhs.z,
+                   lhs.x * rhs.y - lhs.y * rhs.x};
+}
+
 Vector3 Vector3::random(ValueType min, ValueType max) {
     return Vector3{random_float(min, max),
                    random_float(min, max),

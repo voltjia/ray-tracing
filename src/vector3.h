@@ -12,6 +12,8 @@ struct Vector3 {
 
     static ValueType dot(const Vector3& lhs, const Vector3& rhs);
 
+    static Vector3 cross(const Vector3& lhs, const Vector3& rhs);
+
     static Vector3 random(ValueType min, ValueType max);
 
     ValueType magnitude_sqaured() const;

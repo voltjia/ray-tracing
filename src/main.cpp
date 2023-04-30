@@ -139,7 +139,11 @@ int main(int argc, char* argv[]) {
     constexpr auto samples_per_pixel{100};
     constexpr auto max_depth{50};
 
-    Camera camera;
+    Camera camera(Vector3{-2, 2, -1},
+                  Vector3::forward,
+                  Vector3::up,
+                  degrees_to_radians(20),
+                  aspect_radio);
 
     HittableList world;
 
@@ -153,7 +157,8 @@ int main(int argc, char* argv[]) {
                                        ground_material));
     world.add(std::make_shared<Sphere>(Vector3{0, 0, 1}, 0.5, center_material));
     world.add(std::make_shared<Sphere>(Vector3{-1, 0, 1}, 0.5, left_material));
-    world.add(std::make_shared<Sphere>(Vector3{-1, 0, 1}, -0.4, left_material));
+    world.add(
+            std::make_shared<Sphere>(Vector3{-1, 0, 1}, -0.45, left_material));
     world.add(std::make_shared<Sphere>(Vector3{1, 0, 1}, 0.5, right_material));
 
     std::vector<std::uint8_t> buffer;
