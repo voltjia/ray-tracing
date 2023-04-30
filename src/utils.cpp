@@ -30,6 +30,15 @@ double random_double() {
     return random_double(0, 1);
 }
 
+Vector3 random_in_unit_disk() {
+    for (;;) {
+        auto vec{Vector3{random_float(-1, 1), random_float(-1, 1), 0}};
+        if (vec.magnitude_sqaured() < 1) {
+            return vec;
+        }
+    }
+}
+
 Vector3 random_vector_in_unit_sphere() {
     for (;;) {
         auto vec{Vector3::random(-1, 1)};

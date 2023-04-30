@@ -16,7 +16,9 @@ public:
            Vector3 lookat,
            Vector3 viewup,
            Vector3::ValueType vertical_fov,
-           Vector3::ValueType aspect_ratio);
+           Vector3::ValueType aspect_ratio,
+           Vector3::ValueType focus_distance,
+           Vector3::ValueType aperture);
 
     Ray generate_ray(Vector3::ValueType s, Vector3::ValueType t) const;
 
@@ -29,7 +31,11 @@ private:
 
     Vector3::ValueType viewport_width{aspect_ratio * viewport_height};
 
-    Vector3::ValueType focal_length{1};
+    Vector3::ValueType focus_distance{1};
+
+    Vector3::ValueType aperture{0};
+
+    Vector3::ValueType lens_radius{aperture / 2};
 
     Vector3 lookfrom{Vector3::zero};
 
@@ -43,12 +49,13 @@ private:
 
     Vector3 v{Vector3::cross(w, u)};
 
-    Vector3 viewport_horizontal{viewport_width * u};
+    Vector3 viewport_horizontal{focus_distance * viewport_width * u};
 
-    Vector3 viewport_vertical{viewport_height * v};
+    Vector3 viewport_vertical{focus_distance * viewport_height * v};
 
     Vector3 viewport_lower_left_corner{lookfrom - viewport_horizontal / 2
-                                       - viewport_vertical / 2 + w};
+                                       - viewport_vertical / 2
+                                       + focus_distance * w};
 };
 
 }

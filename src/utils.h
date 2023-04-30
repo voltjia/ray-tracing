@@ -23,6 +23,8 @@ double random_double(double min, double max);
 
 double random_double();
 
+Vector3 random_in_unit_disk();
+
 Vector3 random_vector_in_unit_sphere();
 
 Vector3 random_unit_vector();

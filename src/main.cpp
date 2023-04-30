@@ -139,11 +139,19 @@ int main(int argc, char* argv[]) {
     constexpr auto samples_per_pixel{100};
     constexpr auto max_depth{50};
 
-    Camera camera(Vector3{-2, 2, -1},
-                  Vector3::forward,
-                  Vector3::up,
+    const auto lookfrom{Vector3{3, 3, -2}};
+    const auto lookat{Vector3::forward};
+    const auto viewup{Vector3::up};
+    const auto focus_distance{(lookat - lookfrom).magnitude()};
+    constexpr auto aperture{2};
+
+    Camera camera(lookfrom,
+                  lookat,
+                  viewup,
                   degrees_to_radians(20),
-                  aspect_radio);
+                  aspect_radio,
+                  focus_distance,
+                  aperture);
 
     HittableList world;
 
