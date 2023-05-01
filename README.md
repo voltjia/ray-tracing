@@ -36,7 +36,7 @@ cd build
 4. Run CMake to generate the build files:
 
 ```bash
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
 
 5. Build the project using the generated build files:
