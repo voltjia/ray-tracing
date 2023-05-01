@@ -192,10 +192,9 @@ int main(int argc, char* argv[]) {
 
     const char* output_filename = argv[1];
 
-    constexpr auto aspect_radio{16.0 / 9.0};
-    constexpr std::size_t image_width{1920};
-    constexpr auto image_height{
-            static_cast<decltype(image_width)>(image_width / aspect_radio)};
+    constexpr auto aspect_ratio{16.0 / 9.0};
+    constexpr auto image_height{1080};
+    constexpr auto image_width{aspect_ratio * image_height};
     constexpr auto samples_per_pixel{500};
     constexpr auto max_depth{50};
 
@@ -209,7 +208,7 @@ int main(int argc, char* argv[]) {
                   lookat,
                   viewup,
                   degrees_to_radians(20),
-                  aspect_radio,
+                  aspect_ratio,
                   focus_distance,
                   aperture);
 
