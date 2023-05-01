@@ -2,6 +2,8 @@
 
 This is a simple ray tracer implementation in C++ that renders a random scene with various materials and shapes. The output is saved as a PNG image file. The project follows the tutorial from [Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html) by Peter Shirley.
 
+![Example Output](example.png)
+
 ## Features
 
 * Ray tracing for spheres in a 3D space.
