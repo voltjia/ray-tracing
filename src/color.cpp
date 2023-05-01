@@ -19,7 +19,11 @@ Color Color::lerp(const Color& c0, const Color& c1, ValueType t) {
 }
 
 Color Color::gamma() const {
-    return Color{std::sqrt(r), std::sqrt(g), std::sqrt(b), std::sqrt(a)};
+    constexpr auto gamma{1.0f / 2.2f};
+    return Color{std::pow(r, gamma),
+                 std::pow(g, gamma),
+                 std::pow(b, gamma),
+                 std::pow(a, gamma)};
 }
 
 Color operator-(const Color& color) {

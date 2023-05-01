@@ -21,7 +21,7 @@
 
 using namespace ray_tracing;
 
-static constexpr std::size_t num_channels{4};
+static constexpr auto num_channels{3};
 
 static Color::ValueType scale_256(Color::ValueType value) {
     return std::floor(value == 1 ? 255 : value * 256);
@@ -68,7 +68,7 @@ static bool write_png(const char* filename,
                  width,
                  height,
                  8,
-                 PNG_COLOR_TYPE_RGBA,
+                 PNG_COLOR_TYPE_RGB,
                  PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_DEFAULT,
                  PNG_FILTER_TYPE_DEFAULT);
@@ -215,13 +215,13 @@ int main(int argc, char* argv[]) {
     auto world{random_scene()};
 
     std::vector<std::uint8_t> buffer;
-    for (auto row{decltype(image_height){image_height}}; row != -1; --row) {
+    for (auto row{decltype(image_height){image_height - 1}}; row != -1; --row) {
         for (auto col{decltype(image_width){0}}; col < image_width; ++col) {
             Color::ValueType r_sum{0};
             Color::ValueType g_sum{0};
             Color::ValueType b_sum{0};
             Color::ValueType a_sum{0};
-            for (auto i{samples_per_pixel}; i != -1; --i) {
+            for (auto i{samples_per_pixel - 1}; i != -1; --i) {
                 auto u{(static_cast<Vector3::ValueType>(col) + random_double())
                        / (image_width - 1)};
                 auto v{(static_cast<Vector3::ValueType>(row) + random_double())
@@ -241,7 +241,6 @@ int main(int argc, char* argv[]) {
             buffer.emplace_back(scale_256(color_gamma_corrected.r));
             buffer.emplace_back(scale_256(color_gamma_corrected.g));
             buffer.emplace_back(scale_256(color_gamma_corrected.b));
-            buffer.emplace_back(scale_256(color_gamma_corrected.a));
         }
 
         constexpr auto progress_bar_width{50};
