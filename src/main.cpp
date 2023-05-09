@@ -9,11 +9,16 @@
 #include "utils.h"
 #include "vector3.h"
 
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
 #include <png.h>
 
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <cmath>
@@ -126,7 +131,7 @@ static Color hit_color(const Ray& ray,
     return background_color(ray);
 }
 
-HittableList random_scene() {
+static HittableList random_scene() {
     HittableList scene;
 
     auto ground_material{std::make_shared<Lambertian>(Color::gray)};
@@ -192,6 +197,14 @@ int main(int argc, char* argv[]) {
 
     const char* output_filename = argv[1];
 
+#ifdef USE_MPI
+    MPI_Init(&argc, &argv);
+    int world_size;
+    int world_rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
     constexpr auto aspect_ratio{16.0 / 9.0};
     constexpr auto image_height{1080};
     constexpr auto image_width{aspect_ratio * image_height};
@@ -201,21 +214,33 @@ int main(int argc, char* argv[]) {
     const auto lookfrom{Vector3{13, 2, -3}};
     const auto lookat{Vector3::zero};
     const auto viewup{Vector3::up};
-    const auto focus_distance{10};
+    constexpr auto focus_distance{10};
     constexpr auto aperture{0.1};
 
-    Camera camera(lookfrom,
+    Camera camera{lookfrom,
                   lookat,
                   viewup,
                   degrees_to_radians(20),
                   aspect_ratio,
                   focus_distance,
-                  aperture);
+                  aperture};
 
     auto world{random_scene()};
 
-    std::vector<std::uint8_t> buffer;
+    constexpr auto buffer_size{image_width * image_height * num_channels};
+#ifdef USE_MPI
+    auto rows_per_process{image_height / world_size};
+    auto reverse_rank{world_size - world_rank - 1};
+    auto start_row{reverse_rank * rows_per_process};
+    auto end_row{reverse_rank == world_size - 1 ? image_height
+                                                : start_row + rows_per_process};
+    std::vector<std::uint8_t> buffer((end_row - start_row) * image_width
+                                     * num_channels);
+    for (auto row{start_row}; row < end_row; ++row) {
+#else
+    std::vector<std::uint8_t> buffer(buffer_size);
     for (auto row{decltype(image_height){image_height - 1}}; row != -1; --row) {
+#endif
         for (auto col{decltype(image_width){0}}; col < image_width; ++col) {
             Color::ValueType r_sum{0};
             Color::ValueType g_sum{0};
@@ -238,11 +263,55 @@ int main(int argc, char* argv[]) {
                         b_sum / samples_per_pixel,
                         a_sum / samples_per_pixel};
             Color color_gamma_corrected{color.gamma()};
-            buffer.emplace_back(scale_256(color_gamma_corrected.r));
-            buffer.emplace_back(scale_256(color_gamma_corrected.g));
-            buffer.emplace_back(scale_256(color_gamma_corrected.b));
+#ifdef USE_MPI
+            auto index{((end_row - row - 1) * image_width + col)
+                       * num_channels};
+#else
+            auto index{((image_height - row - 1) * image_width + col)
+                       * num_channels};
+#endif
+            buffer[index] = scale_256(color_gamma_corrected.r);
+            buffer[index + 1] = scale_256(color_gamma_corrected.g);
+            buffer[index + 2] = scale_256(color_gamma_corrected.b);
         }
+#ifdef USE_MPI
+    }
 
+    decltype(buffer) image_buffer;
+    if (world_rank == 0) {
+        image_buffer.resize(buffer_size);
+    }
+
+    std::vector<int> chunk_sizes(world_size);
+    chunk_sizes[world_rank] = buffer.size();
+    MPI_Allgather(MPI_IN_PLACE,
+                  0,
+                  MPI_DATATYPE_NULL,
+                  chunk_sizes.data(),
+                  1,
+                  MPI_INT,
+                  MPI_COMM_WORLD);
+    std::vector<int> displacements(world_size);
+    displacements[world_rank]
+            = (image_height - end_row) * image_width * num_channels;
+    MPI_Allgather(MPI_IN_PLACE,
+                  0,
+                  MPI_DATATYPE_NULL,
+                  displacements.data(),
+                  1,
+                  MPI_INT,
+                  MPI_COMM_WORLD);
+
+    MPI_Gatherv(buffer.data(),
+                chunk_sizes[world_rank],
+                MPI_UNSIGNED_CHAR,
+                image_buffer.data(),
+                chunk_sizes.data(),
+                displacements.data(),
+                MPI_UNSIGNED_CHAR,
+                0,
+                MPI_COMM_WORLD);
+#else
         constexpr auto progress_bar_width{50};
         auto progress{100.0 * (image_height - row) / image_height};
         auto num_progress_chars{progress_bar_width * (image_height - row)
@@ -258,13 +327,27 @@ int main(int argc, char* argv[]) {
     }
     std::cerr << '\n';
 
-    if (write_png(output_filename, image_width, image_height, buffer.data())) {
-        std::cerr << "PNG file '" << output_filename
-                  << "' created successfully.\n";
-    } else {
-        std::cerr << "Failed to create PNG file.\n";
-        return 1;
+    auto image_buffer{std::move(buffer)};
+#endif
+
+#ifdef USE_MPI
+    if (world_rank == 0) {
+#endif
+        if (write_png(output_filename,
+                      image_width,
+                      image_height,
+                      image_buffer.data())) {
+            std::cerr << "PNG file '" << output_filename
+                      << "' created successfully.\n";
+        } else {
+            std::cerr << "Failed to create PNG file.\n";
+            return 1;
+        }
+#ifdef USE_MPI
     }
+
+    MPI_Finalize();
+#endif
 
     return 0;
 }

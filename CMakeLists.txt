@@ -5,6 +5,11 @@ project("Ray Tracing")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+option(USE_MPI "Use MPI." OFF)
+if (USE_MPI)
+    find_package(MPI REQUIRED)
+endif()
+
 find_package(PNG REQUIRED)
 
 add_executable(trace
@@ -21,4 +26,11 @@ add_executable(trace
     src/metal.cpp
     src/dielectric.cpp
 )
-target_link_libraries(trace PNG::PNG)
+
+if (USE_MPI)
+    target_include_directories(trace PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+    target_compile_definitions(trace PRIVATE USE_MPI)
+    target_link_libraries(trace PRIVATE ${MPI_CXX_LIBRARIES})
+endif()
+
+target_link_libraries(trace PRIVATE PNG::PNG)
