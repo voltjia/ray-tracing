@@ -5,6 +5,11 @@ project("Ray Tracing")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+option(USE_OPENMP "Use OpenMP." OFF)
+if (USE_OPENMP)
+    find_package(OpenMP REQUIRED)
+endif()
+
 option(USE_MPI "Use MPI." OFF)
 if (USE_MPI)
     find_package(MPI REQUIRED)
@@ -26,6 +31,11 @@ add_executable(trace
     src/metal.cpp
     src/dielectric.cpp
 )
+
+if (USE_OPENMP)
+    target_compile_definitions(trace PRIVATE USE_OPENMP)
+    target_link_libraries(trace PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 if (USE_MPI)
     target_include_directories(trace PRIVATE ${MPI_CXX_INCLUDE_DIRS})

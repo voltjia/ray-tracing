@@ -9,6 +9,10 @@
 #include "utils.h"
 #include "vector3.h"
 
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 #ifdef USE_MPI
 #include <mpi.h>
 #endif
@@ -239,9 +243,18 @@ int main(int argc, char* argv[]) {
     for (auto row{start_row}; row < end_row; ++row) {
 #else
     std::vector<std::uint8_t> buffer(buffer_size);
+#ifdef USE_OPENMP
+#pragma omp parallel for schedule(dynamic, 1) collapse(2) if (USE_OPENMP)
+    for (int row = 0; row < static_cast<int>(image_height); ++row) {
+#else
     for (auto row{decltype(image_height){image_height - 1}}; row != -1; --row) {
 #endif
+#endif
+#ifdef USE_OPENMP
+        for (int col = 0; col < static_cast<int>(image_width); ++col) {
+#else
         for (auto col{decltype(image_width){0}}; col < image_width; ++col) {
+#endif
             Color::ValueType r_sum{0};
             Color::ValueType g_sum{0};
             Color::ValueType b_sum{0};
@@ -312,6 +325,9 @@ int main(int argc, char* argv[]) {
                 0,
                 MPI_COMM_WORLD);
 #else
+#ifdef USE_OPENMP
+    }
+#else
         constexpr auto progress_bar_width{50};
         auto progress{100.0 * (image_height - row) / image_height};
         auto num_progress_chars{progress_bar_width * (image_height - row)
@@ -326,7 +342,7 @@ int main(int argc, char* argv[]) {
                   << " % completed.";
     }
     std::cerr << '\n';
-
+#endif
     auto image_buffer{std::move(buffer)};
 #endif
 
