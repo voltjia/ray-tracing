@@ -47,6 +47,21 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
 
+## Optional Features
+
+The project supports optional parallelization using OpenMP and/or MPI. To enable these features, use the following CMake options:
+
+* For OpenMP: `-DUSE_OPENMP=ON`
+* For MPI: `-DUSE_MPI=ON`
+
+For example, to build the project with MPI support, run:
+
+```bash
+cmake -DUSE_MPI=ON -DCMAKE_BUILD_TYPE=Release ..
+```
+
+Then build the project as described earlier.
+
 ## Usage
 
 ```bash
